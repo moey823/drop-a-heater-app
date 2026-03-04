@@ -1,0 +1,62 @@
+{
+  "name": "drop-a-heater",
+  "version": "1.0.0",
+  "description": "One button. One track. Always fire. — Track recommendation for Serato DJs.",
+  "main": "dist/main/index.js",
+  "author": "Drop A Heater",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "package": "electron-vite build && electron-builder --mac",
+    "package:dmg": "electron-vite build && electron-builder --mac dmg"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.0"
+  },
+  "build": {
+    "appId": "com.dropaheater.app",
+    "productName": "Drop A Heater",
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.png",
+      "protocols": [
+        {
+          "name": "Drop A Heater Auth",
+          "schemes": [
+            "dropaheater"
+          ]
+        }
+      ],
+      "minimumSystemVersion": "12.0"
+    },
+    "dmg": {
+      "title": "Drop A Heater"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    }
+  }
+}
