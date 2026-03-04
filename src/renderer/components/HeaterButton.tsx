@@ -88,7 +88,6 @@ export const HeaterButton: React.FC<HeaterButtonProps> = ({
         cursor: enabled ? 'pointer' : 'not-allowed',
         opacity: enabled ? 1 : 0.5,
         border: 'none',
-        outline: 'none',
         transform: `scale(${scale})`,
         transition: prefersReducedMotion ? 'none' : 'transform 0.15s ease',
         boxShadow: enabled

@@ -196,7 +196,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             fontSize: 20,
             lineHeight: 1,
             padding: spacing.sm,
-            outline: 'none',
           }}
         >
           &times;
@@ -344,7 +343,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             textAlign: 'left',
             marginBottom: spacing.sm,
             opacity: checkingUpdates ? 0.6 : 1,
-            outline: 'none',
           }}
         >
           {checkingUpdates ? 'Checking...' : 'Check for Updates'}

@@ -30,7 +30,6 @@ export const GearIcon: React.FC<GearIconProps> = ({ onClick }) => {
         justifyContent: 'center',
         borderRadius: 6,
         color: colors.textSecondary,
-        outline: 'none',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.color = colors.text

@@ -24,6 +24,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
   trackInLibrary,
 }) => {
   const hasTrack = deckState?.track != null
+  const isTrackNotInLibrary = !hasTrack && !!deckState?.trackNotInLibrary
 
   return (
     <div
@@ -35,9 +36,16 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
         NOW PLAYING
       </SectionLabel>
 
-      {!hasTrack && (
+      {!hasTrack && !isTrackNotInLibrary && (
         <p style={{ ...typeScale.bodySmall, color: colors.textSecondary }}>
           No deck loaded. Play a track in Serato, then hit the button.
+        </p>
+      )}
+
+      {isTrackNotInLibrary && (
+        <p style={{ ...typeScale.bodySmall, color: colors.textSecondary }}>
+          Track not in your scanned library. Re-scan to include recent
+          additions.
         </p>
       )}
 

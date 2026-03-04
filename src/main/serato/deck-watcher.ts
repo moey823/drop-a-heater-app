@@ -210,6 +210,7 @@ export class DeckWatcher {
     this.onStateChange({
       track: track ?? null,
       detectedAt: Date.now(),
+      trackNotInLibrary: !track,
     })
   }
 

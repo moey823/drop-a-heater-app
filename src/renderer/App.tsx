@@ -212,14 +212,23 @@ export const App: React.FC = () => {
   useEffect(() => {
     const unsub = api.onAuthStateChanged((data) => {
       const state = data as AuthState
+      const errorMessage = (data as AuthState & { error?: string }).error
       setAuthState(state)
 
       if (state.isAuthenticated) {
         setAuthScreenState('loading')
         setCurrentView('main')
         validateAndScan()
+      } else if (errorMessage) {
+        // OAuth2 callback failed — show error on auth screen
+        setCurrentView('auth')
+        setAuthScreenState('error')
+        setAuthError({
+          message: errorMessage,
+          isNetworkError: false,
+        })
       } else {
-        // Auth was revoked or failed
+        // Auth was revoked or no error context
         setCurrentView('auth')
         setAuthScreenState('default')
       }
@@ -232,6 +241,14 @@ export const App: React.FC = () => {
     const unsub = api.onLibraryScanProgress((data) => {
       const progress = data as LibraryScanProgress
       setScanProgress(progress.tracksIndexed)
+
+      if (progress.error) {
+        // Scan failed — surface the error and stop scanning
+        setAppError(progress.error)
+        setScanning(false)
+        setScanComplete(false)
+        return
+      }
 
       if (progress.complete && progress.libraryIndex) {
         setLibraryIndex(progress.libraryIndex)

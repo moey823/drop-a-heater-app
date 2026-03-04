@@ -45,6 +45,8 @@ export interface DeckState {
   track: Track | null
   /** When this deck state was detected */
   detectedAt: number
+  /** True when a track is detected on the deck but not found in the library index */
+  trackNotInLibrary?: boolean
 }
 
 /**
@@ -148,6 +150,8 @@ export interface LibraryScanProgress {
   complete: boolean
   /** Final library index (only present when complete === true) */
   libraryIndex?: LibraryIndex
+  /** Error details (only present when scan failed) */
+  error?: AppError
 }
 
 /**
