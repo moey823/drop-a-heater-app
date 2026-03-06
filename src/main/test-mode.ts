@@ -235,11 +235,14 @@ export function registerTestModeHandlers(): void {
 
   // ---- Native Drag ----
 
+  const dragIconPath = path.join(__dirname, '../../assets/icon.png')
+  const dragIcon = fs.existsSync(dragIconPath)
+    ? nativeImage.createFromPath(dragIconPath).resize({ width: 32, height: 32 })
+    : nativeImage.createEmpty()
+
   ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
     if (!filePath || !fs.existsSync(filePath)) return { success: false }
-    const iconPath = path.join(__dirname, '../../assets/icon.png')
-    const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
-    event.sender.startDrag({ file: filePath, icon })
+    event.sender.startDrag({ file: filePath, icon: dragIcon })
     return { success: true }
   })
 }
