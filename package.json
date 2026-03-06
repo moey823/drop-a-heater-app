@@ -38,6 +38,8 @@
         "dmg"
       ],
       "icon": "assets/icon.png",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "protocols": [
         {
           "name": "Drop A Heater Auth",
@@ -46,7 +48,12 @@
           ]
         }
       ],
-      "minimumSystemVersion": "12.0"
+      "minimumSystemVersion": "12.0",
+      "extendInfo": {
+        "NSDownloadsFolderUsageDescription": "Drop A Heater needs access to your Downloads folder to drag tracks into Serato.",
+        "NSDesktopFolderUsageDescription": "Drop A Heater needs access to your Desktop to drag tracks into Serato.",
+        "NSDocumentsFolderUsageDescription": "Drop A Heater needs access to your Documents to drag tracks into Serato."
+      }
     },
     "dmg": {
       "title": "Drop A Heater"
