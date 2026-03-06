@@ -39,6 +39,9 @@ const api = {
   // ---- Shell ----
   openExternal: (url: string) => ipcRenderer.invoke(IPC_INVOKE.SHELL_OPEN_EXTERNAL, url),
 
+  // ---- Native Drag ----
+  startDrag: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.NATIVE_DRAG, filePath),
+
   // ---- Event Listeners ----
   // Subscribe to push events from the main process.
   // Returns an unsubscribe function.

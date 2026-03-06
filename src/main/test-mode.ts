@@ -7,7 +7,9 @@
 // Usage: TEST_MODE=1 npm run dev
 // To remove: delete this file and the `if` blocks in index.ts
 
-import { ipcMain, shell, BrowserWindow } from 'electron'
+import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
+import * as path from 'path'
+import * as fs from 'fs'
 import { IPC_INVOKE, IPC_EVENT } from '@shared/ipc-channels'
 import type { LibraryIndex, DeckState, Recommendation, AuthState, SubscriptionStatus } from '@shared/types'
 import { scanSeratoLibrary, SeratoNotFoundError, SeratoParseError } from './serato/library-parser'
@@ -174,6 +176,16 @@ export function registerTestModeHandlers(): void {
 
   ipcMain.handle(IPC_INVOKE.SHELL_OPEN_EXTERNAL, async (_, url: string) => {
     await shell.openExternal(url)
+  })
+
+  // ---- Native Drag ----
+
+  ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
+    if (!filePath || !fs.existsSync(filePath)) return { success: false }
+    const iconPath = path.join(__dirname, '../../assets/icon.png')
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
+    event.sender.startDrag({ file: filePath, icon })
+    return { success: true }
   })
 }
 

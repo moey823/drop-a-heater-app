@@ -37,6 +37,9 @@ export const IPC_INVOKE = {
 
   /** Open a URL in the system default browser. */
   SHELL_OPEN_EXTERNAL: 'shell:open-external',
+
+  /** Start a native file drag for a track. Arg: filePath. */
+  NATIVE_DRAG: 'native:drag',
 } as const
 
 /** Event channels: main pushes to renderer */

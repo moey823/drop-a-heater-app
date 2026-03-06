@@ -3,16 +3,20 @@
 // ============================================================
 // Displays the recommended track with transparency breakdown.
 // Appears below the button when a result is returned.
+// The card is draggable — drag it into a Serato deck to load.
 // PRD ref: F5 (One-Button Recommendation), F7 (Transparency Display)
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Card } from '../shared/components/Card'
 import { SectionLabel } from '../shared/components/SectionLabel'
 import { TransparencyCard } from './TransparencyCard'
 import { colors } from '../shared/design-tokens/colors'
 import { typeScale } from '../shared/design-tokens/typography'
 import { spacing } from '../shared/design-tokens/spacing'
+import { useIpc } from '../shared/hooks/useIpc'
 import type { Recommendation } from '../../shared/types'
+
+const DRAG_HINT_KEY = 'dah-drag-hint-dismissed'
 
 interface RecommendationCardProps {
   /** The recommendation result, or null if no result / cleared */
@@ -25,7 +29,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
   noResult,
 }) => {
+  const api = useIpc()
   const announceRef = useRef<HTMLDivElement>(null)
+  const [showDragHint, setShowDragHint] = useState(
+    () => !localStorage.getItem(DRAG_HINT_KEY)
+  )
 
   // VoiceOver announcement when a recommendation appears (per PRD F12)
   useEffect(() => {
@@ -35,6 +43,16 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       announceRef.current.textContent = announcement
     }
   }, [recommendation])
+
+  const handleDragStart = useCallback(async (e: React.DragEvent) => {
+    if (!recommendation) return
+    e.preventDefault()
+    const result = await api.startDrag(recommendation.track.filePath) as { success: boolean }
+    if (result?.success && showDragHint) {
+      localStorage.setItem(DRAG_HINT_KEY, '1')
+      setShowDragHint(false)
+    }
+  }, [recommendation, api, showDragHint])
 
   if (!recommendation && !noResult) return null
 
@@ -72,24 +90,41 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       )}
 
       {recommendation && (
-        <Card>
-          <SectionLabel style={{ marginBottom: spacing.md }}>
-            RECOMMENDED TRACK
-          </SectionLabel>
-          <h3
-            style={{
-              ...typeScale.h3,
-              color: colors.text,
-              marginBottom: spacing.xs,
-            }}
-          >
-            {recommendation.track.title}
-          </h3>
-          <p style={{ ...typeScale.bodySmall, color: colors.textSecondary }}>
-            {recommendation.track.artist}
-          </p>
-          <TransparencyCard data={recommendation.transparency} />
-        </Card>
+        <div
+          draggable
+          onDragStart={handleDragStart}
+          style={{ cursor: 'grab' }}
+          aria-label={`Drag ${recommendation.track.title} by ${recommendation.track.artist} to load in Serato`}
+        >
+          <Card>
+            <SectionLabel style={{ marginBottom: spacing.md }}>
+              RECOMMENDED TRACK
+            </SectionLabel>
+            <h3
+              style={{
+                ...typeScale.h3,
+                color: colors.text,
+                marginBottom: spacing.xs,
+              }}
+            >
+              {recommendation.track.title}
+            </h3>
+            <p style={{ ...typeScale.bodySmall, color: colors.textSecondary }}>
+              {recommendation.track.artist}
+            </p>
+            <TransparencyCard data={recommendation.transparency} />
+          </Card>
+          {showDragHint && (
+            <p style={{
+              ...typeScale.bodyXs,
+              color: colors.textSecondary,
+              textAlign: 'center',
+              marginTop: spacing.sm,
+            }}>
+              drag to deck
+            </p>
+          )}
+        </div>
       )}
     </div>
   )
