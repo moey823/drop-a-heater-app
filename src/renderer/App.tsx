@@ -27,6 +27,7 @@ import type {
   SubscriptionStatus,
   LibraryIndex,
   DeckState,
+  DeckInfo,
   Recommendation,
   AppError,
   LibraryScanProgress,
@@ -59,6 +60,7 @@ export const App: React.FC = () => {
 
   // --- Deck state ---
   const [deckState, setDeckState] = useState<DeckState | null>(null)
+  const [selectedDeck, setSelectedDeck] = useState<number>(1)
 
   // --- Error state ---
   const [appError, setAppError] = useState<AppError | null>(null)
@@ -68,11 +70,17 @@ export const App: React.FC = () => {
   const [updateDownloaded, setUpdateDownloaded] = useState(false)
   const [updateDismissed, setUpdateDismissed] = useState(false)
 
-  // --- Track-in-library check ---
+  // --- Selected deck helpers ---
+  const selectedDeckInfo = useCallback((): DeckInfo | null => {
+    if (!deckState) return null
+    return deckState.decks.find(d => d.deckNumber === selectedDeck) ?? null
+  }, [deckState, selectedDeck])
+
   const trackInLibrary = useCallback((): boolean => {
-    if (!deckState?.track || !libraryIndex) return false
-    return libraryIndex.tracks.some((t) => t.id === deckState.track!.id)
-  }, [deckState, libraryIndex])
+    const deck = selectedDeckInfo()
+    if (!deck?.track || !libraryIndex) return false
+    return libraryIndex.tracks.some((t) => t.id === deck.track!.id)
+  }, [selectedDeckInfo, libraryIndex])
 
   // --- Refs ---
   const scanCompleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -363,12 +371,12 @@ export const App: React.FC = () => {
 
   const handleGetRecommendation = useCallback(async (): Promise<Recommendation | null> => {
     try {
-      const result = (await api.getRecommendation()) as Recommendation | null
+      const result = (await api.getRecommendation(selectedDeck)) as Recommendation | null
       return result
     } catch {
       return null
     }
-  }, [])
+  }, [selectedDeck])
 
   const handleCheckSubscription = useCallback(async () => {
     try {
@@ -438,6 +446,8 @@ export const App: React.FC = () => {
           subscriptionStatus={subscriptionStatus}
           libraryIndex={libraryIndex}
           deckState={deckState}
+          selectedDeck={selectedDeck}
+          onSelectDeck={setSelectedDeck}
           trackInLibrary={trackInLibrary()}
           appError={appError}
           scanning={scanning}

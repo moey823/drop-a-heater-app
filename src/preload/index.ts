@@ -27,7 +27,7 @@ const api = {
   getLibraryIndex: () => ipcRenderer.invoke(IPC_INVOKE.LIBRARY_GET_INDEX),
 
   // ---- Recommendation ----
-  getRecommendation: () => ipcRenderer.invoke(IPC_INVOKE.RECOMMENDATION_GET),
+  getRecommendation: (deckNumber: number) => ipcRenderer.invoke(IPC_INVOKE.RECOMMENDATION_GET, deckNumber),
 
   // ---- Deck State ----
   getDeckState: () => ipcRenderer.invoke(IPC_INVOKE.DECK_GET_STATE),

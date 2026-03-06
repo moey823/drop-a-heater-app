@@ -12,6 +12,7 @@ import { app, BrowserWindow, Menu, shell } from 'electron'
 import * as path from 'path'
 import { WINDOW, URL_SCHEME } from '@shared/constants'
 import { registerIpcHandlers, handleAuthCallback, cleanup } from './ipc-handlers'
+import { isTestMode, registerTestModeHandlers, cleanupTestMode } from './test-mode'
 
 // Register as the handler for the dropaheater:// URL scheme
 if (process.defaultApp) {
@@ -149,9 +150,11 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', (_event, commandLine) => {
     // macOS: handle URL scheme from second instance
-    const url = commandLine.find(arg => arg.startsWith(`${URL_SCHEME}://`))
-    if (url) {
-      handleAuthCallback(url)
+    if (!isTestMode) {
+      const url = commandLine.find(arg => arg.startsWith(`${URL_SCHEME}://`))
+      if (url) {
+        handleAuthCallback(url)
+      }
     }
 
     // Focus the existing window
@@ -163,7 +166,11 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     // Register IPC handlers before creating the window
-    registerIpcHandlers()
+    if (isTestMode) {
+      registerTestModeHandlers()
+    } else {
+      registerIpcHandlers()
+    }
 
     // Build the menu bar
     buildMenu()
@@ -175,7 +182,7 @@ if (!gotTheLock) {
   // macOS: Handle URL scheme (when app is already running)
   app.on('open-url', (event, url) => {
     event.preventDefault()
-    if (url.startsWith(`${URL_SCHEME}://`)) {
+    if (!isTestMode && url.startsWith(`${URL_SCHEME}://`)) {
       handleAuthCallback(url)
     }
   })
@@ -198,6 +205,10 @@ if (!gotTheLock) {
   })
 
   app.on('before-quit', () => {
-    cleanup()
+    if (isTestMode) {
+      cleanupTestMode()
+    } else {
+      cleanup()
+    }
   })
 }

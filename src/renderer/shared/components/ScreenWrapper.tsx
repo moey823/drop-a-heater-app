@@ -36,11 +36,14 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        // Pad top for macOS title bar (hiddenInset style)
-        paddingTop: 28,
         ...style,
       }}
     >
+      {/* Draggable title bar region for macOS hiddenInset */}
+      <div
+        className="titlebar-drag-region"
+        style={{ height: 28, flexShrink: 0 }}
+      />
       <div
         style={{
           flex: 1,

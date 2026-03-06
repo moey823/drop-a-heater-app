@@ -52,6 +52,10 @@ interface MainViewProps {
   libraryIndex: LibraryIndex | null
   /** Current deck state */
   deckState: DeckState | null
+  /** Currently selected deck number */
+  selectedDeck: number
+  /** Callback to select a deck */
+  onSelectDeck: (deck: number) => void
   /** Whether the track on deck is found in the library index */
   trackInLibrary: boolean
   /** Current app error (if any) */
@@ -95,6 +99,8 @@ export const MainView: React.FC<MainViewProps> = ({
   subscriptionStatus,
   libraryIndex,
   deckState,
+  selectedDeck,
+  onSelectDeck,
   trackInLibrary,
   appError,
   scanning,
@@ -133,15 +139,18 @@ export const MainView: React.FC<MainViewProps> = ({
 
   const viewState = getViewState()
 
-  // Clear recommendation when deck state changes (per PRD F5)
+  // Selected deck info
+  const selectedDeckInfo = deckState?.decks.find(d => d.deckNumber === selectedDeck) ?? null
+
+  // Clear recommendation when selected deck's track changes (per PRD F5)
   useEffect(() => {
-    const currentTrackId = deckState?.track?.id ?? null
+    const currentTrackId = selectedDeckInfo?.track?.id ?? null
     if (prevDeckTrackId.current !== null && currentTrackId !== prevDeckTrackId.current) {
       setRecommendation(null)
       setNoResult(false)
     }
     prevDeckTrackId.current = currentTrackId
-  }, [deckState])
+  }, [selectedDeckInfo])
 
   // Clear recommendation when scan starts (per PRD F8)
   useEffect(() => {
@@ -163,7 +172,7 @@ export const MainView: React.FC<MainViewProps> = ({
   }, [onGetRecommendation])
 
   // Determine if the button should be enabled
-  const hasTrack = deckState?.track != null
+  const hasTrack = selectedDeckInfo?.track != null
   const buttonEnabled =
     viewState === 'ready' && hasTrack && trackInLibrary && libraryIndex != null
 
@@ -250,8 +259,13 @@ export const MainView: React.FC<MainViewProps> = ({
             overflow: 'auto',
           }}
         >
-          {/* Now Playing section */}
-          <NowPlaying deckState={deckState} trackInLibrary={trackInLibrary} />
+          {/* Now Playing section — both decks */}
+          <NowPlaying
+            deckState={deckState}
+            selectedDeck={selectedDeck}
+            onSelectDeck={onSelectDeck}
+            trackInLibrary={trackInLibrary}
+          />
 
           {/* Empty library message (E3) */}
           {isEmptyLibrary && (

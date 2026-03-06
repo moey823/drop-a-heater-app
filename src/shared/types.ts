@@ -38,15 +38,25 @@ export interface Track {
 }
 
 /**
- * The current deck state — what track is loaded on the active deck(s).
+ * A single deck — track loaded on one side.
  */
-export interface DeckState {
-  /** The currently playing/loaded track, or null if no deck is loaded */
+export interface DeckInfo {
+  /** Deck number (1 = left, 2 = right) */
+  deckNumber: number
+  /** The track loaded on this deck, or null if empty */
   track: Track | null
-  /** When this deck state was detected */
-  detectedAt: number
   /** True when a track is detected on the deck but not found in the library index */
   trackNotInLibrary?: boolean
+}
+
+/**
+ * The current deck state — what's loaded on both decks.
+ */
+export interface DeckState {
+  /** Both decks */
+  decks: DeckInfo[]
+  /** When this state was detected */
+  detectedAt: number
 }
 
 /**

@@ -82,7 +82,9 @@ function parseTrackEntry(buffer: Buffer, startOffset: number, entryLength: numbe
     if (offset + dataLength > endOffset) break
 
     // Parse known tags
+    // Serato DJ 4.x uses 'pfil' for file path; older versions used 'ptrk'
     switch (tag) {
+      case 'pfil':
       case 'ptrk':
         track.filePath = readUtf16BE(buffer, offset, dataLength)
         break
@@ -195,9 +197,10 @@ function parseCrateMemberships(seratoPath: string): Map<string, string[]> {
               const subLength = buffer.readUInt32BE(subOffset)
               subOffset += 4
 
-              if (subTag === 'ptrk') {
-                const trackPath = readUtf16BE(buffer, subOffset, subLength)
+              if (subTag === 'ptrk' || subTag === 'pfil') {
+                let trackPath = readUtf16BE(buffer, subOffset, subLength)
                 if (trackPath) {
+                  if (!trackPath.startsWith('/')) trackPath = '/' + trackPath
                   const existing = crateMap.get(trackPath) || []
                   existing.push(crateName)
                   crateMap.set(trackPath, existing)
@@ -242,18 +245,25 @@ function convertToTrack(raw: RawSeratoTrack, indexPosition: number): Track {
   // Genre — keep as-is (case preserved), null if empty
   const genre = raw.genre && raw.genre.trim() !== '' ? raw.genre.trim() : null
 
+  // Serato DJ 4.x stores paths without leading '/' (e.g. "Users/matthew/...")
+  // Normalize to absolute path
+  let filePath = raw.filePath
+  if (filePath && !filePath.startsWith('/')) {
+    filePath = '/' + filePath
+  }
+
   // Generate a stable ID from the file path
-  const id = Buffer.from(raw.filePath).toString('base64url')
+  const id = Buffer.from(filePath).toString('base64url')
 
   return {
     id,
-    title: raw.title || path.basename(raw.filePath, path.extname(raw.filePath)),
+    title: raw.title || path.basename(filePath, path.extname(filePath)),
     artist: raw.artist || 'Unknown Artist',
     bpm,
     camelotKey,
     genre,
     crates: raw.crates,
-    filePath: raw.filePath,
+    filePath,
     indexPosition,
   }
 }
