@@ -242,22 +242,9 @@ export function registerTestModeHandlers(): void {
     : nativeImage.createEmpty()
 
   ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
-    if (!filePath || !fs.existsSync(filePath)) {
-      console.log('[drag] file missing or empty path:', filePath)
-      return
-    }
-    try {
-      // Verify we can actually read the file (not just stat it)
-      const fd = fs.openSync(filePath, 'r')
-      fs.closeSync(fd)
-      console.log('[drag] starting:', filePath)
-      event.sender.startDrag({ file: filePath, icon: dragIcon })
-      console.log('[drag] startDrag returned OK')
-    } catch (err) {
-      console.log('[drag] cannot read file (TCC?):', filePath, (err as Error).code || err)
-      // Fallback: show in Finder instead
-      shell.showItemInFolder(filePath)
-    }
+    if (!filePath || !fs.existsSync(filePath)) return
+    console.log('[drag] starting:', filePath)
+    event.sender.startDrag({ file: filePath, icon: dragIcon })
   })
 }
 
