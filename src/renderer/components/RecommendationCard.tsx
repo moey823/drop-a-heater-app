@@ -56,19 +56,13 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }, [recommendation])
 
-  // Drag: tell main process to start a native OS file drag.
-  // We call preventDefault() to suppress the browser drag ghost, then
-  // fire-and-forget to the main process which calls startDrag.
-  // Also set dataTransfer as a fallback for apps that accept URI lists.
+  // Native drag: preventDefault suppresses the browser drag ghost,
+  // then we fire-and-forget to main which calls webContents.startDrag.
+  // This produces a native OS file drag that Serato can accept.
   const handleDragStart = (e: React.DragEvent) => {
     if (!recommendation) return
-    const filePath = recommendation.track.filePath
-    const fileUrl = 'file://' + encodeURI(filePath).replace(/%20/g, '%20')
-    e.dataTransfer.setData('text/uri-list', fileUrl)
-    e.dataTransfer.setData('text/plain', filePath)
-    e.dataTransfer.effectAllowed = 'copy'
-    // Also fire native drag via main process (for apps that need native file promises)
-    api.startDrag(filePath)
+    e.preventDefault()
+    api.startDrag(recommendation.track.filePath)
     if (showDragHint) {
       localStorage.setItem(DRAG_HINT_KEY, '1')
       setShowDragHint(false)

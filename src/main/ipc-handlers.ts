@@ -4,7 +4,7 @@
 // Registers all IPC handlers that the renderer can invoke.
 // Each handler maps to a channel defined in @shared/ipc-channels.
 
-import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
+import { ipcMain, shell, BrowserWindow, nativeImage, app } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
@@ -168,11 +168,30 @@ export function registerIpcHandlers(): void {
 
   // ---- Native Drag (fire-and-forget, must be synchronous for OS drag) ----
 
+  // Pre-create the drag icon once — avoids repeated I/O per drag
+  let dragIcon: Electron.NativeImage | null = null
+  try {
+    const iconPath = path.join(app.getAppPath(), 'assets', 'icon.png')
+    if (fs.existsSync(iconPath)) {
+      dragIcon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
+    }
+  } catch {
+    // Fall through to fallback below
+  }
+  if (!dragIcon || dragIcon.isEmpty()) {
+    // Fallback: create a small 16x16 orange square
+    dragIcon = nativeImage.createFromBuffer(
+      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAH0lEQVQ4jWP8z8Dwn4EIwMQwSjBoDABhNMoGDRcNAHRHAhBTnov0AAAAAElFTkSuQmCC', 'base64')
+    )
+  }
+
   ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
-    if (!filePath || !fs.existsSync(filePath)) return
-    const iconPath = path.join(__dirname, '../../assets/icon.png')
-    const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
-    event.sender.startDrag({ file: filePath, icon })
+    try {
+      if (!filePath || !fs.existsSync(filePath)) return
+      event.sender.startDrag({ file: filePath, icon: dragIcon! })
+    } catch (err) {
+      console.error('[drag] startDrag failed:', err)
+    }
   })
 }
 
