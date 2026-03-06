@@ -183,43 +183,22 @@ export function registerIpcHandlers(): void {
     ? nativeImage.createFromPath(dragIconPath).resize({ width: 32, height: 32 })
     : nativeImage.createEmpty()
 
-  // Temp dir for drag proxies (files outside ~/Music/ need to be
-  // hard-linked here so macOS grants the drop target access)
-  const musicDir = path.join(os.homedir(), 'Music')
-  const dragTempDir = path.join(musicDir, '.dah-drag-temp')
-
-  function getDragPath(filePath: string): string {
-    // Files already in ~/Music/ work directly
-    if (filePath.startsWith(musicDir + '/')) return filePath
-
-    // Create temp dir if needed
-    if (!fs.existsSync(dragTempDir)) {
-      fs.mkdirSync(dragTempDir, { recursive: true })
-    }
-
-    // Clean up any stale temp files from previous drags
-    try {
-      for (const f of fs.readdirSync(dragTempDir)) {
-        fs.unlinkSync(path.join(dragTempDir, f))
-      }
-    } catch { /* ignore */ }
-
-    const tempPath = path.join(dragTempDir, path.basename(filePath))
-    try {
-      // Hard link is instant + no disk space
-      fs.linkSync(filePath, tempPath)
-    } catch {
-      // Cross-filesystem: fall back to copy
-      fs.copyFileSync(filePath, tempPath)
-    }
-    return tempPath
-  }
-
   ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
-    if (!filePath || !fs.existsSync(filePath)) return { success: false }
-    const dragPath = getDragPath(filePath)
-    event.sender.startDrag({ file: dragPath, icon: dragIcon })
-    return { success: true }
+    if (!filePath || !fs.existsSync(filePath)) {
+      console.log('[drag] file missing or empty path:', filePath)
+      return { success: false }
+    }
+    try {
+      const stat = fs.statSync(filePath)
+      console.log('[drag] starting:', filePath)
+      console.log('[drag] size:', stat.size, 'mode:', stat.mode.toString(8))
+      event.sender.startDrag({ file: filePath, icon: dragIcon })
+      console.log('[drag] startDrag returned OK')
+      return { success: true }
+    } catch (err) {
+      console.error('[drag] startDrag failed:', err)
+      return { success: false }
+    }
   })
 }
 
@@ -314,14 +293,4 @@ function stopDeckWatcher(): void {
 export function cleanup(): void {
   stopDeckWatcher()
   stopLibraryWatcher()
-  // Clean up drag temp dir
-  const tempDir = path.join(os.homedir(), 'Music', '.dah-drag-temp')
-  try {
-    if (fs.existsSync(tempDir)) {
-      for (const f of fs.readdirSync(tempDir)) {
-        fs.unlinkSync(path.join(tempDir, f))
-      }
-      fs.rmdirSync(tempDir)
-    }
-  } catch { /* ignore */ }
 }
