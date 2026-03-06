@@ -240,12 +240,35 @@ export function registerTestModeHandlers(): void {
     ? nativeImage.createFromPath(dragIconPath).resize({ width: 32, height: 32 })
     : nativeImage.createEmpty()
 
+  const musicDir = path.join(os.homedir(), 'Music')
+  const dragTempDir = path.join(musicDir, '.dah-drag-temp')
+
+  function getDragPath(filePath: string): string {
+    if (filePath.startsWith(musicDir + '/')) return filePath
+
+    if (!fs.existsSync(dragTempDir)) {
+      fs.mkdirSync(dragTempDir, { recursive: true })
+    }
+
+    try {
+      for (const f of fs.readdirSync(dragTempDir)) {
+        fs.unlinkSync(path.join(dragTempDir, f))
+      }
+    } catch { /* ignore */ }
+
+    const tempPath = path.join(dragTempDir, path.basename(filePath))
+    try {
+      fs.linkSync(filePath, tempPath)
+    } catch {
+      fs.copyFileSync(filePath, tempPath)
+    }
+    return tempPath
+  }
+
   ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
-    console.log('[drag] path:', filePath)
-    console.log('[drag] exists:', fs.existsSync(filePath))
     if (!filePath || !fs.existsSync(filePath)) return { success: false }
-    event.sender.startDrag({ file: filePath, icon: dragIcon })
-    console.log('[drag] startDrag called')
+    const dragPath = getDragPath(filePath)
+    event.sender.startDrag({ file: dragPath, icon: dragIcon })
     return { success: true }
   })
 }
@@ -253,4 +276,13 @@ export function registerTestModeHandlers(): void {
 export function cleanupTestMode(): void {
   stopDeckWatcher()
   stopLibraryWatcher()
+  const tempDir = path.join(os.homedir(), 'Music', '.dah-drag-temp')
+  try {
+    if (fs.existsSync(tempDir)) {
+      for (const f of fs.readdirSync(tempDir)) {
+        fs.unlinkSync(path.join(tempDir, f))
+      }
+      fs.rmdirSync(tempDir)
+    }
+  } catch { /* ignore */ }
 }
