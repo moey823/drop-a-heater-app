@@ -38,12 +38,8 @@ export const IPC_INVOKE = {
   /** Open a URL in the system default browser. */
   SHELL_OPEN_EXTERNAL: 'shell:open-external',
 
-} as const
-
-/** One-way channels: renderer fires, main acts (no response) */
-export const IPC_SEND = {
-  /** Start a native file drag for a track. Arg: filePath. */
-  NATIVE_DRAG: 'native:drag',
+  /** Reveal a file in Finder. Arg: filePath. */
+  SHELL_SHOW_IN_FOLDER: 'shell:show-in-folder',
 } as const
 
 /** Event channels: main pushes to renderer */

@@ -7,11 +7,11 @@
 // Usage: TEST_MODE=1 npm run dev
 // To remove: delete this file and the `if` blocks in index.ts
 
-import { ipcMain, shell, BrowserWindow, nativeImage, app } from 'electron'
+import { ipcMain, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
-import { IPC_INVOKE, IPC_EVENT, IPC_SEND } from '@shared/ipc-channels'
+import { IPC_INVOKE, IPC_EVENT } from '@shared/ipc-channels'
 import type { LibraryIndex, DeckState, Recommendation, AuthState, SubscriptionStatus } from '@shared/types'
 import { scanSeratoLibrary, SeratoNotFoundError, SeratoParseError } from './serato/library-parser'
 import { DeckWatcher } from './serato/deck-watcher'
@@ -39,6 +39,7 @@ let currentDeckState: DeckState = { decks: [{ deckNumber: 1, track: null }, { de
 let deckWatcher: DeckWatcher | null = null
 let libraryWatcher: fs.FSWatcher | null = null
 let libraryChangeDebounce: ReturnType<typeof setTimeout> | null = null
+let libraryLastMtimeMs: number = 0
 
 function getMainWindow(): BrowserWindow | null {
   const windows = BrowserWindow.getAllWindows()
@@ -71,12 +72,26 @@ function startLibraryWatcher(): void {
   stopLibraryWatcher()
   const dbPath = path.join(os.homedir(), 'Music', '_Serato_', 'database V2')
   if (!fs.existsSync(dbPath)) return
+
+  try {
+    libraryLastMtimeMs = fs.statSync(dbPath).mtimeMs
+  } catch {
+    return
+  }
+
   try {
     libraryWatcher = fs.watch(dbPath, () => {
       if (libraryChangeDebounce) clearTimeout(libraryChangeDebounce)
       libraryChangeDebounce = setTimeout(() => {
-        sendToRenderer(IPC_EVENT.LIBRARY_CHANGED, {})
-      }, 3000)
+        try {
+          const currentMtime = fs.statSync(dbPath).mtimeMs
+          if (currentMtime <= libraryLastMtimeMs) return
+          libraryLastMtimeMs = currentMtime
+          sendToRenderer(IPC_EVENT.LIBRARY_CHANGED, {})
+        } catch {
+          // ignore
+        }
+      }, 5000)
     })
   } catch {
     // Non-fatal
@@ -210,29 +225,11 @@ export function registerTestModeHandlers(): void {
     await shell.openExternal(url)
   })
 
-  // ---- Native Drag (fire-and-forget, must be synchronous for OS drag) ----
+  // ---- Show in Finder ----
 
-  let dragIcon: Electron.NativeImage | null = null
-  try {
-    const iconPath = path.join(app.getAppPath(), 'assets', 'icon.png')
-    if (fs.existsSync(iconPath)) {
-      dragIcon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
-    }
-  } catch {
-    // Fall through
-  }
-  if (!dragIcon || dragIcon.isEmpty()) {
-    dragIcon = nativeImage.createFromBuffer(
-      Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAH0lEQVQ4jWP8z8Dwn4EIwMQwSjBoDABhNMoGDRcNAHRHAhBTnov0AAAAAElFTkSuQmCC', 'base64')
-    )
-  }
-
-  ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
-    try {
-      if (!filePath || !fs.existsSync(filePath)) return
-      event.sender.startDrag({ file: filePath, icon: dragIcon! })
-    } catch (err) {
-      console.error('[drag] startDrag failed:', err)
+  ipcMain.handle(IPC_INVOKE.SHELL_SHOW_IN_FOLDER, async (_, filePath: string) => {
+    if (filePath && fs.existsSync(filePath)) {
+      shell.showItemInFolder(filePath)
     }
   })
 }
