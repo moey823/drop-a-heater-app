@@ -56,11 +56,19 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }, [recommendation])
 
-  // Native drag — must be synchronous (send, not invoke) to keep OS drag context
+  // Drag: tell main process to start a native OS file drag.
+  // We call preventDefault() to suppress the browser drag ghost, then
+  // fire-and-forget to the main process which calls startDrag.
+  // Also set dataTransfer as a fallback for apps that accept URI lists.
   const handleDragStart = (e: React.DragEvent) => {
     if (!recommendation) return
-    e.preventDefault()
-    api.startDrag(recommendation.track.filePath)
+    const filePath = recommendation.track.filePath
+    const fileUrl = 'file://' + encodeURI(filePath).replace(/%20/g, '%20')
+    e.dataTransfer.setData('text/uri-list', fileUrl)
+    e.dataTransfer.setData('text/plain', filePath)
+    e.dataTransfer.effectAllowed = 'copy'
+    // Also fire native drag via main process (for apps that need native file promises)
+    api.startDrag(filePath)
     if (showDragHint) {
       localStorage.setItem(DRAG_HINT_KEY, '1')
       setShowDragHint(false)
