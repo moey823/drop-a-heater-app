@@ -7,7 +7,7 @@
 // Usage: TEST_MODE=1 npm run dev
 // To remove: delete this file and the `if` blocks in index.ts
 
-import { ipcMain, shell, BrowserWindow } from 'electron'
+import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
@@ -231,6 +231,16 @@ export function registerTestModeHandlers(): void {
     if (filePath && fs.existsSync(filePath)) {
       shell.showItemInFolder(filePath)
     }
+  })
+
+  // ---- Native Drag ----
+
+  ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
+    if (!filePath || !fs.existsSync(filePath)) return { success: false }
+    const iconPath = path.join(__dirname, '../../assets/icon.png')
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
+    event.sender.startDrag({ file: filePath, icon })
+    return { success: true }
   })
 }
 

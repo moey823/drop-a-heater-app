@@ -3,11 +3,11 @@
 // ============================================================
 // Displays the recommended track with transparency breakdown.
 // Appears below the button when a result is returned.
-// Tap the card to reveal the file in Finder — then drag from
-// Finder into Serato (Serato only accepts Finder-originated drags).
+// The card is draggable — drag it into a Serato deck to load.
+// Also has a "show in Finder" fallback button.
 // PRD ref: F5 (One-Button Recommendation), F7 (Transparency Display)
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import { Card } from '../shared/components/Card'
 import { SectionLabel } from '../shared/components/SectionLabel'
 import { TransparencyCard } from './TransparencyCard'
@@ -24,10 +24,22 @@ interface RecommendationCardProps {
   noResult: boolean
 }
 
-/** Finder icon — folder with magnifying glass */
+/** Finder icon — folder outline */
 const FinderIcon: React.FC = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 3C2 2.44772 2.44772 2 3 2H6L7.5 3.5H11C11.5523 3.5 12 3.94772 12 4.5V10C12 10.5523 11.5523 11 11 11H3C2.44772 11 2 10.5523 2 10V3Z" stroke={colors.textSecondary} strokeWidth="1.2" fill="none"/>
+    <path d="M2 3C2 2.44772 2.44772 2 3 2H6L7.5 3.5H11C11.5523 3.5 12 3.94772 12 4.5V10C12 10.5523 11.5523 11 11 11H3C2.44772 11 2 10.5523 2 10V3Z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+  </svg>
+)
+
+/** Grip dots icon — 6 dots in a 2x3 grid */
+const GripIcon: React.FC = () => (
+  <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+    <circle cx="6" cy="2" r="1.5" fill="currentColor" />
+    <circle cx="2" cy="7" r="1.5" fill="currentColor" />
+    <circle cx="6" cy="7" r="1.5" fill="currentColor" />
+    <circle cx="2" cy="12" r="1.5" fill="currentColor" />
+    <circle cx="6" cy="12" r="1.5" fill="currentColor" />
   </svg>
 )
 
@@ -47,10 +59,17 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }, [recommendation])
 
-  const handleRevealInFinder = () => {
+  // Native drag — original pattern that was working
+  const handleDragStart = useCallback(async (e: React.DragEvent) => {
+    if (!recommendation) return
+    e.preventDefault()
+    await api.startDrag(recommendation.track.filePath)
+  }, [recommendation, api])
+
+  const handleShowInFinder = useCallback(() => {
     if (!recommendation) return
     api.showInFolder(recommendation.track.filePath)
-  }
+  }, [recommendation, api])
 
   if (!recommendation && !noResult) return null
 
@@ -88,67 +107,86 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       )}
 
       {recommendation && (
-        <Card>
-          {/* Header row: label + reveal button */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: spacing.md,
-          }}>
-            <SectionLabel>RECOMMENDED TRACK</SectionLabel>
-            <button
-              onClick={handleRevealInFinder}
-              aria-label={`Show ${recommendation.track.title} in Finder`}
-              style={{
+        <div
+          draggable
+          onDragStart={handleDragStart}
+          style={{ cursor: 'grab' }}
+          aria-label={`Drag ${recommendation.track.title} by ${recommendation.track.artist} to load in Serato`}
+        >
+          <Card>
+            {/* Header row: label + actions */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: spacing.md,
+            }}>
+              <SectionLabel>RECOMMENDED TRACK</SectionLabel>
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 4,
-                background: 'none',
-                border: `1px solid ${colors.border}`,
-                borderRadius: 6,
-                padding: '4px 8px',
-                cursor: 'pointer',
+                gap: spacing.sm,
                 color: colors.textSecondary,
-                ...typeScale.caption,
-                transition: 'border-color 0.15s, color 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.flame
-                e.currentTarget.style.color = colors.text
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = colors.border
-                e.currentTarget.style.color = colors.textSecondary
+              }}>
+                {/* Show in Finder button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleShowInFinder()
+                  }}
+                  aria-label={`Show ${recommendation.track.title} in Finder`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'none',
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 6,
+                    padding: '3px 7px',
+                    cursor: 'pointer',
+                    color: 'inherit',
+                    ...typeScale.caption,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = colors.flame
+                    e.currentTarget.style.color = colors.text
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = colors.border
+                    e.currentTarget.style.color = colors.textSecondary
+                  }}
+                >
+                  <FinderIcon />
+                  Finder
+                </button>
+                {/* Drag grip */}
+                <GripIcon />
+              </div>
+            </div>
+            <h3
+              style={{
+                ...typeScale.h3,
+                color: colors.text,
+                marginBottom: spacing.xs,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
-              <FinderIcon />
-              show in Finder
-            </button>
-          </div>
-          <h3
-            style={{
-              ...typeScale.h3,
-              color: colors.text,
-              marginBottom: spacing.xs,
+              {recommendation.track.title}
+            </h3>
+            <p style={{
+              ...typeScale.bodySmall,
+              color: colors.textSecondary,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-            }}
-          >
-            {recommendation.track.title}
-          </h3>
-          <p style={{
-            ...typeScale.bodySmall,
-            color: colors.textSecondary,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-            {recommendation.track.artist}
-          </p>
-          <TransparencyCard data={recommendation.transparency} />
-        </Card>
+            }}>
+              {recommendation.track.artist}
+            </p>
+            <TransparencyCard data={recommendation.transparency} />
+          </Card>
+        </div>
       )}
     </div>
   )

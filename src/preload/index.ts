@@ -42,6 +42,9 @@ const api = {
   // ---- Finder ----
   showInFolder: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.SHELL_SHOW_IN_FOLDER, filePath),
 
+  // ---- Native Drag ----
+  startDrag: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.NATIVE_DRAG, filePath),
+
   // ---- Event Listeners ----
   // Subscribe to push events from the main process.
   // Returns an unsubscribe function.

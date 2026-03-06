@@ -40,6 +40,9 @@ export const IPC_INVOKE = {
 
   /** Reveal a file in Finder. Arg: filePath. */
   SHELL_SHOW_IN_FOLDER: 'shell:show-in-folder',
+
+  /** Start a native file drag for a track. Arg: filePath. */
+  NATIVE_DRAG: 'native:drag',
 } as const
 
 /** Event channels: main pushes to renderer */
