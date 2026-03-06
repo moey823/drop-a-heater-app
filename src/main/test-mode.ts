@@ -241,8 +241,11 @@ export function registerTestModeHandlers(): void {
     : nativeImage.createEmpty()
 
   ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
+    console.log('[drag] path:', filePath)
+    console.log('[drag] exists:', fs.existsSync(filePath))
     if (!filePath || !fs.existsSync(filePath)) return { success: false }
     event.sender.startDrag({ file: filePath, icon: dragIcon })
+    console.log('[drag] startDrag called')
     return { success: true }
   })
 }
