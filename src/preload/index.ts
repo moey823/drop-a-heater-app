@@ -9,7 +9,7 @@
 // never imports Electron directly.
 
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_INVOKE, IPC_EVENT } from '@shared/ipc-channels'
+import { IPC_INVOKE, IPC_SEND, IPC_EVENT } from '@shared/ipc-channels'
 
 /** The API exposed to the renderer via window.api */
 const api = {
@@ -42,8 +42,8 @@ const api = {
   // ---- Finder ----
   showInFolder: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.SHELL_SHOW_IN_FOLDER, filePath),
 
-  // ---- Native Drag ----
-  startDrag: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.NATIVE_DRAG, filePath),
+  // ---- Native Drag (fire-and-forget — must not await during OS drag) ----
+  startDrag: (filePath: string) => ipcRenderer.send(IPC_SEND.NATIVE_DRAG, filePath),
 
   // ---- Event Listeners ----
   // Subscribe to push events from the main process.

@@ -8,7 +8,7 @@ import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
-import { IPC_INVOKE, IPC_EVENT } from '@shared/ipc-channels'
+import { IPC_INVOKE, IPC_SEND, IPC_EVENT } from '@shared/ipc-channels'
 import type { LibraryIndex, DeckState, Recommendation, AuthState, SubscriptionStatus } from '@shared/types'
 import { scanSeratoLibrary, SeratoNotFoundError, SeratoParseError } from './serato/library-parser'
 import { DeckWatcher } from './serato/deck-watcher'
@@ -183,21 +183,17 @@ export function registerIpcHandlers(): void {
     ? nativeImage.createFromPath(dragIconPath).resize({ width: 32, height: 32 })
     : nativeImage.createEmpty()
 
-  ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
+  ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
     if (!filePath || !fs.existsSync(filePath)) {
       console.log('[drag] file missing or empty path:', filePath)
-      return { success: false }
+      return
     }
     try {
-      const stat = fs.statSync(filePath)
       console.log('[drag] starting:', filePath)
-      console.log('[drag] size:', stat.size, 'mode:', stat.mode.toString(8))
       event.sender.startDrag({ file: filePath, icon: dragIcon })
       console.log('[drag] startDrag returned OK')
-      return { success: true }
     } catch (err) {
       console.error('[drag] startDrag failed:', err)
-      return { success: false }
     }
   })
 }

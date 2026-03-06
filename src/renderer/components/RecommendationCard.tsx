@@ -59,11 +59,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }, [recommendation])
 
-  // Native drag — original pattern that was working
-  const handleDragStart = useCallback(async (e: React.DragEvent) => {
+  // Native drag — fire-and-forget per Electron docs
+  const handleDragStart = useCallback((e: React.DragEvent) => {
     if (!recommendation) return
     e.preventDefault()
-    await api.startDrag(recommendation.track.filePath)
+    api.startDrag(recommendation.track.filePath)
   }, [recommendation, api])
 
   const handleShowInFinder = useCallback(() => {
