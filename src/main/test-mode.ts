@@ -10,7 +10,8 @@
 import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
-import { IPC_INVOKE, IPC_EVENT } from '@shared/ipc-channels'
+import * as os from 'os'
+import { IPC_INVOKE, IPC_EVENT, IPC_SEND } from '@shared/ipc-channels'
 import type { LibraryIndex, DeckState, Recommendation, AuthState, SubscriptionStatus } from '@shared/types'
 import { scanSeratoLibrary, SeratoNotFoundError, SeratoParseError } from './serato/library-parser'
 import { DeckWatcher } from './serato/deck-watcher'
@@ -36,6 +37,8 @@ const MOCK_SUBSCRIPTION: SubscriptionStatus = {
 let libraryIndex: LibraryIndex | null = null
 let currentDeckState: DeckState = { decks: [{ deckNumber: 1, track: null }, { deckNumber: 2, track: null }], detectedAt: 0 }
 let deckWatcher: DeckWatcher | null = null
+let libraryWatcher: fs.FSWatcher | null = null
+let libraryChangeDebounce: ReturnType<typeof setTimeout> | null = null
 
 function getMainWindow(): BrowserWindow | null {
   const windows = BrowserWindow.getAllWindows()
@@ -61,6 +64,33 @@ function stopDeckWatcher(): void {
   if (deckWatcher) {
     deckWatcher.stop()
     deckWatcher = null
+  }
+}
+
+function startLibraryWatcher(): void {
+  stopLibraryWatcher()
+  const dbPath = path.join(os.homedir(), 'Music', '_Serato_', 'database V2')
+  if (!fs.existsSync(dbPath)) return
+  try {
+    libraryWatcher = fs.watch(dbPath, () => {
+      if (libraryChangeDebounce) clearTimeout(libraryChangeDebounce)
+      libraryChangeDebounce = setTimeout(() => {
+        sendToRenderer(IPC_EVENT.LIBRARY_CHANGED, {})
+      }, 3000)
+    })
+  } catch {
+    // Non-fatal
+  }
+}
+
+function stopLibraryWatcher(): void {
+  if (libraryWatcher) {
+    libraryWatcher.close()
+    libraryWatcher = null
+  }
+  if (libraryChangeDebounce) {
+    clearTimeout(libraryChangeDebounce)
+    libraryChangeDebounce = null
   }
 }
 
@@ -116,6 +146,8 @@ export function registerTestModeHandlers(): void {
       } else {
         startDeckWatcher()
       }
+
+      startLibraryWatcher()
     } catch (err) {
       if (err instanceof SeratoNotFoundError) {
         sendToRenderer(IPC_EVENT.LIBRARY_SCAN_PROGRESS, {
@@ -178,17 +210,17 @@ export function registerTestModeHandlers(): void {
     await shell.openExternal(url)
   })
 
-  // ---- Native Drag ----
+  // ---- Native Drag (fire-and-forget, must be synchronous for OS drag) ----
 
-  ipcMain.handle(IPC_INVOKE.NATIVE_DRAG, (event, filePath: string) => {
-    if (!filePath || !fs.existsSync(filePath)) return { success: false }
+  ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
+    if (!filePath || !fs.existsSync(filePath)) return
     const iconPath = path.join(__dirname, '../../assets/icon.png')
     const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
     event.sender.startDrag({ file: filePath, icon })
-    return { success: true }
   })
 }
 
 export function cleanupTestMode(): void {
   stopDeckWatcher()
+  stopLibraryWatcher()
 }

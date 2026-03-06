@@ -38,6 +38,10 @@ export const IPC_INVOKE = {
   /** Open a URL in the system default browser. */
   SHELL_OPEN_EXTERNAL: 'shell:open-external',
 
+} as const
+
+/** One-way channels: renderer fires, main acts (no response) */
+export const IPC_SEND = {
   /** Start a native file drag for a track. Arg: filePath. */
   NATIVE_DRAG: 'native:drag',
 } as const
@@ -57,4 +61,7 @@ export const IPC_EVENT = {
   UPDATE_AVAILABLE: 'update:available',
   /** App update downloaded and ready to install. Payload: { version: string }. */
   UPDATE_DOWNLOADED: 'update:downloaded',
+
+  /** Serato library files changed on disk — renderer should re-scan. */
+  LIBRARY_CHANGED: 'library:changed',
 } as const

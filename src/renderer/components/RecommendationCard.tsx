@@ -6,7 +6,7 @@
 // The card is draggable — drag it into a Serato deck to load.
 // PRD ref: F5 (One-Button Recommendation), F7 (Transparency Display)
 
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Card } from '../shared/components/Card'
 import { SectionLabel } from '../shared/components/SectionLabel'
 import { TransparencyCard } from './TransparencyCard'
@@ -24,6 +24,18 @@ interface RecommendationCardProps {
   /** "No compatible tracks" state */
   noResult: boolean
 }
+
+/** Grip dots icon — 6 dots in a 2x3 grid */
+const GripIcon: React.FC = () => (
+  <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="2" cy="2" r="1.5" fill={colors.textSecondary} />
+    <circle cx="6" cy="2" r="1.5" fill={colors.textSecondary} />
+    <circle cx="2" cy="7" r="1.5" fill={colors.textSecondary} />
+    <circle cx="6" cy="7" r="1.5" fill={colors.textSecondary} />
+    <circle cx="2" cy="12" r="1.5" fill={colors.textSecondary} />
+    <circle cx="6" cy="12" r="1.5" fill={colors.textSecondary} />
+  </svg>
+)
 
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
@@ -44,15 +56,16 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }, [recommendation])
 
-  const handleDragStart = useCallback(async (e: React.DragEvent) => {
+  // Native drag — must be synchronous (send, not invoke) to keep OS drag context
+  const handleDragStart = (e: React.DragEvent) => {
     if (!recommendation) return
     e.preventDefault()
-    const result = await api.startDrag(recommendation.track.filePath) as { success: boolean }
-    if (result?.success && showDragHint) {
+    api.startDrag(recommendation.track.filePath)
+    if (showDragHint) {
       localStorage.setItem(DRAG_HINT_KEY, '1')
       setShowDragHint(false)
     }
-  }, [recommendation, api, showDragHint])
+  }
 
   if (!recommendation && !noResult) return null
 
@@ -97,33 +110,52 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
           aria-label={`Drag ${recommendation.track.title} by ${recommendation.track.artist} to load in Serato`}
         >
           <Card>
-            <SectionLabel style={{ marginBottom: spacing.md }}>
-              RECOMMENDED TRACK
-            </SectionLabel>
+            {/* Header row: label + grip icon */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: spacing.md,
+            }}>
+              <SectionLabel>RECOMMENDED TRACK</SectionLabel>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: spacing.xs,
+              }}>
+                <span style={{
+                  ...typeScale.caption,
+                  color: colors.textSecondary,
+                  opacity: showDragHint ? 1 : 0.6,
+                }}>
+                  drag to deck
+                </span>
+                <GripIcon />
+              </div>
+            </div>
             <h3
               style={{
                 ...typeScale.h3,
                 color: colors.text,
                 marginBottom: spacing.xs,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {recommendation.track.title}
             </h3>
-            <p style={{ ...typeScale.bodySmall, color: colors.textSecondary }}>
+            <p style={{
+              ...typeScale.bodySmall,
+              color: colors.textSecondary,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
               {recommendation.track.artist}
             </p>
             <TransparencyCard data={recommendation.transparency} />
           </Card>
-          {showDragHint && (
-            <p style={{
-              ...typeScale.bodyXs,
-              color: colors.textSecondary,
-              textAlign: 'center',
-              marginTop: spacing.sm,
-            }}>
-              drag to deck
-            </p>
-          )}
         </div>
       )}
     </div>

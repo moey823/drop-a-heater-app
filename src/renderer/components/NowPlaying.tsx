@@ -33,6 +33,7 @@ const DeckCard: React.FC<DeckCardProps> = ({ deck, isSelected, onSelect }) => {
       onClick={onSelect}
       style={{
         flex: 1,
+        minWidth: 0,
         padding: spacing.md,
         background: isSelected ? colors.surface : 'transparent',
         border: `1px solid ${isSelected ? colors.flame : colors.border}`,

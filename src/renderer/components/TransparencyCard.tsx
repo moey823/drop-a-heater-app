@@ -64,6 +64,7 @@ export const TransparencyCard: React.FC<TransparencyCardProps> = ({ data }) => {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    overflow: 'hidden',
   }
 
   const labelStyle: React.CSSProperties = {

@@ -313,6 +313,16 @@ export const App: React.FC = () => {
     return () => { unsub() }
   }, [currentView, scanning, startLibraryScan])
 
+  // Library changed on disk — auto re-scan
+  useEffect(() => {
+    const unsub = api.onLibraryChanged(() => {
+      if (currentView === 'main' && !scanning) {
+        startLibraryScan(true)
+      }
+    })
+    return () => { unsub() }
+  }, [currentView, scanning, startLibraryScan])
+
   // Menu: Check for Updates
   useEffect(() => {
     const unsub = api.onMenuCheckUpdates(async () => {
