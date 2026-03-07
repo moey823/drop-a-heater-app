@@ -134,7 +134,10 @@ export const MainView: React.FC<MainViewProps> = ({
   const [fileAccessDismissed, setFileAccessDismissed] = useState(false)
 
   useEffect(() => {
-    api.checkFileAccess().then((result: unknown) => setHasFileAccess(result as boolean))
+    const check = () => api.checkFileAccess().then((result: unknown) => setHasFileAccess(result as boolean))
+    check()
+    window.addEventListener('focus', check)
+    return () => window.removeEventListener('focus', check)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine the current view state
