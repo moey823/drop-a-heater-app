@@ -10,7 +10,9 @@
 
 import { app, BrowserWindow, Menu, shell } from 'electron'
 import * as path from 'path'
+import { autoUpdater } from 'electron-updater'
 import { WINDOW, URL_SCHEME } from '@shared/constants'
+import { IPC_EVENT } from '@shared/ipc-channels'
 import { registerIpcHandlers, handleAuthCallback, cleanup } from './ipc-handlers'
 import { isTestMode, registerTestModeHandlers, cleanupTestMode } from './test-mode'
 
@@ -177,6 +179,28 @@ if (!gotTheLock) {
 
     // Create the main window
     createWindow()
+
+    // Set up auto-updater (production only)
+    if (!isTestMode && !process.env.ELECTRON_RENDERER_URL) {
+      autoUpdater.autoDownload = true
+      autoUpdater.autoInstallOnAppQuit = true
+
+      autoUpdater.on('update-available', (info) => {
+        mainWindow?.webContents.send(IPC_EVENT.UPDATE_AVAILABLE, {
+          version: info.version,
+          downloading: true,
+        })
+      })
+
+      autoUpdater.on('update-downloaded', (info) => {
+        mainWindow?.webContents.send(IPC_EVENT.UPDATE_DOWNLOADED, {
+          version: info.version,
+        })
+      })
+
+      // Check for updates after a short delay to not block startup
+      setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000)
+    }
   })
 
   // macOS: Handle URL scheme (when app is already running)

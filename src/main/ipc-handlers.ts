@@ -4,7 +4,7 @@
 // Registers all IPC handlers that the renderer can invoke.
 // Each handler maps to a channel defined in @shared/ipc-channels.
 
-import { ipcMain, shell, BrowserWindow, nativeImage } from 'electron'
+import { ipcMain, shell, BrowserWindow, nativeImage, app } from 'electron'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
@@ -15,6 +15,7 @@ import { DeckWatcher } from './serato/deck-watcher'
 import { findRecommendation } from './matching/algorithm'
 import { startOAuthFlow, handleOAuthCallback, getAuthState, clearTokens, refreshToken } from './auth/oauth'
 import { validateSubscription } from './subscription/validate'
+import { autoUpdater } from 'electron-updater'
 
 /** Module-level state */
 let libraryIndex: LibraryIndex | null = null
@@ -152,13 +153,16 @@ export function registerIpcHandlers(): void {
   // ---- Updates ----
 
   ipcMain.handle(IPC_INVOKE.UPDATE_CHECK, async () => {
-    // Stub — electron-updater integration is handled in the main process setup.
-    // The builder will wire this up with autoUpdater events.
-    return { available: false }
+    try {
+      const result = await autoUpdater.checkForUpdates()
+      return { available: !!result?.updateInfo, version: result?.updateInfo?.version }
+    } catch {
+      return { available: false }
+    }
   })
 
   ipcMain.handle(IPC_INVOKE.UPDATE_INSTALL, async () => {
-    // Stub — builder will implement with autoUpdater.quitAndInstall()
+    autoUpdater.quitAndInstall()
   })
 
   // ---- Shell ----
