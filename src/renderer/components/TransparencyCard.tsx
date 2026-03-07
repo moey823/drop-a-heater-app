@@ -86,13 +86,13 @@ export const TransparencyCard: React.FC<TransparencyCardProps> = ({ data }) => {
         <span>
           <span style={labelStyle}>Key: </span>
           <span style={{ color: colors.text }}>
-            {data.currentKey} &rarr; {data.recommendedKey}
+            {data.currentKey} {'\u2192'} {data.recommendedKey}
           </span>{' '}
           <span style={{ color: colors.success }}>
             ({data.keyRelationship})
           </span>
         </span>
-        <span style={{ color: colors.success }}>&checkmark;</span>
+        <span style={{ color: colors.success }}>{'\u2713'}</span>
       </div>
 
       {/* BPM line */}
@@ -100,13 +100,13 @@ export const TransparencyCard: React.FC<TransparencyCardProps> = ({ data }) => {
         <span>
           <span style={labelStyle}>BPM: </span>
           <span style={{ color: colors.text }}>
-            {data.currentBpm} &rarr; {data.recommendedBpm}
+            {data.currentBpm} {'\u2192'} {data.recommendedBpm}
           </span>{' '}
           <span style={{ color: getBpmColor(data.bpmDeltaPercent) }}>
             {formatBpmDelta(data.bpmDeltaPercent)}
           </span>
         </span>
-        <span style={{ color: getBpmColor(data.bpmDeltaPercent) }}>&checkmark;</span>
+        <span style={{ color: getBpmColor(data.bpmDeltaPercent) }}>{'\u2713'}</span>
       </div>
 
       {/* Genre line */}
