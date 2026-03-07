@@ -185,7 +185,6 @@ export function registerIpcHandlers(): void {
 
   ipcMain.on(IPC_SEND.NATIVE_DRAG, (event, filePath: string) => {
     if (!filePath || !fs.existsSync(filePath)) return
-    console.log('[drag] starting:', filePath)
     event.sender.startDrag({ file: filePath, icon: dragIcon })
   })
 }
