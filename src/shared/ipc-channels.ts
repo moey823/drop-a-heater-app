@@ -40,6 +40,12 @@ export const IPC_INVOKE = {
 
   /** Reveal a file in Finder. Arg: filePath. */
   SHELL_SHOW_IN_FOLDER: 'shell:show-in-folder',
+
+  /** Check if the app has full file access (can read ~/Downloads/). Returns boolean. */
+  CHECK_FILE_ACCESS: 'system:check-file-access',
+
+  /** Open System Settings to Privacy & Security > Full Disk Access. */
+  OPEN_FILE_ACCESS_SETTINGS: 'system:open-file-access-settings',
 } as const
 
 /** Send channels: renderer fires to main, no response (fire-and-forget) */

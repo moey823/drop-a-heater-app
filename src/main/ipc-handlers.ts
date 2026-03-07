@@ -175,6 +175,21 @@ export function registerIpcHandlers(): void {
     }
   })
 
+  // ---- File Access Check ----
+
+  ipcMain.handle(IPC_INVOKE.CHECK_FILE_ACCESS, (): boolean => {
+    try {
+      fs.readdirSync(path.join(os.homedir(), 'Downloads'))
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  ipcMain.handle(IPC_INVOKE.OPEN_FILE_ACCESS_SETTINGS, async () => {
+    await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles')
+  })
+
   // ---- Native Drag ----
 
   // Cache the drag icon once at startup

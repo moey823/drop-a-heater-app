@@ -21,8 +21,10 @@ import { RecommendationCard } from '../components/RecommendationCard'
 import { LibraryScanLoader } from '../components/LibraryScanLoader'
 import { SubscriptionExpiry } from '../components/SubscriptionExpiry'
 import { UpdateBanner } from '../components/UpdateBanner'
+import { FileAccessBanner } from '../components/FileAccessBanner'
 import { ErrorState } from '../components/ErrorState'
 import { GearIcon } from '../components/GearIcon'
+import { useIpc } from '../shared/hooks/useIpc'
 import { colors } from '../shared/design-tokens/colors'
 import { typeScale } from '../shared/design-tokens/typography'
 import { spacing } from '../shared/design-tokens/spacing'
@@ -120,11 +122,20 @@ export const MainView: React.FC<MainViewProps> = ({
   onDismissUpdate,
   onCheckForUpdates,
 }) => {
+  const api = useIpc()
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
   const [noResult, setNoResult] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const prevDeckTrackId = useRef<string | null>(null)
+
+  // File access state — check once on mount
+  const [hasFileAccess, setHasFileAccess] = useState(true)
+  const [fileAccessDismissed, setFileAccessDismissed] = useState(false)
+
+  useEffect(() => {
+    api.checkFileAccess().then((result: unknown) => setHasFileAccess(result as boolean))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine the current view state
   const getViewState = (): MainViewState => {
@@ -191,6 +202,9 @@ export const MainView: React.FC<MainViewProps> = ({
   const showUpdateBanner =
     updateAvailable != null && !updateDismissed && viewState === 'ready'
 
+  const showFileAccessBanner =
+    !hasFileAccess && !fileAccessDismissed && viewState === 'ready'
+
   return (
     <ScreenWrapper>
       {/* Title bar area with gear icon and optional update banner */}
@@ -219,6 +233,10 @@ export const MainView: React.FC<MainViewProps> = ({
             onRestart={onInstallUpdate}
             onDismiss={onDismissUpdate}
           />
+        )}
+
+        {showFileAccessBanner && (
+          <FileAccessBanner onDismiss={() => setFileAccessDismissed(true)} />
         )}
       </div>
 

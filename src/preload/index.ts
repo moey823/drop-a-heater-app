@@ -42,6 +42,10 @@ const api = {
   // ---- Finder ----
   showInFolder: (filePath: string) => ipcRenderer.invoke(IPC_INVOKE.SHELL_SHOW_IN_FOLDER, filePath),
 
+  // ---- File Access ----
+  checkFileAccess: () => ipcRenderer.invoke(IPC_INVOKE.CHECK_FILE_ACCESS),
+  openFileAccessSettings: () => ipcRenderer.invoke(IPC_INVOKE.OPEN_FILE_ACCESS_SETTINGS),
+
   // ---- Native Drag (fire-and-forget — must not await during OS drag) ----
   startDrag: (filePath: string) => ipcRenderer.send(IPC_SEND.NATIVE_DRAG, filePath),
 
