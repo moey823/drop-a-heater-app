@@ -22,6 +22,8 @@ interface RecommendationCardProps {
   recommendation: Recommendation | null
   /** "No compatible tracks" state */
   noResult: boolean
+  /** Show the Finder fallback button (when FDA not granted) */
+  showFinder?: boolean
 }
 
 /** Finder icon — folder outline */
@@ -46,6 +48,7 @@ const GripIcon: React.FC = () => (
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
   noResult,
+  showFinder = true,
 }) => {
   const api = useIpc()
   const announceRef = useRef<HTMLDivElement>(null)
@@ -128,37 +131,39 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 gap: spacing.sm,
                 color: colors.textSecondary,
               }}>
-                {/* Show in Finder button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleShowInFinder()
-                  }}
-                  aria-label={`Show ${recommendation.track.title} in Finder`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    background: 'none',
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 6,
-                    padding: '3px 7px',
-                    cursor: 'pointer',
-                    color: 'inherit',
-                    ...typeScale.caption,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colors.flame
-                    e.currentTarget.style.color = colors.text
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colors.border
-                    e.currentTarget.style.color = colors.textSecondary
-                  }}
-                >
-                  <FinderIcon />
-                  Finder
-                </button>
+                {/* Show in Finder button — only when FDA not granted */}
+                {showFinder && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleShowInFinder()
+                    }}
+                    aria-label={`Show ${recommendation.track.title} in Finder`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      background: 'none',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 6,
+                      padding: '3px 7px',
+                      cursor: 'pointer',
+                      color: 'inherit',
+                      ...typeScale.caption,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = colors.flame
+                      e.currentTarget.style.color = colors.text
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.color = colors.textSecondary
+                    }}
+                  >
+                    <FinderIcon />
+                    Finder
+                  </button>
+                )}
                 {/* Drag grip */}
                 <GripIcon />
               </div>

@@ -314,6 +314,7 @@ export const MainView: React.FC<MainViewProps> = ({
           <RecommendationCard
             recommendation={recommendation}
             noResult={noResult}
+            showFinder={!hasFileAccess}
           />
         </div>
       )}
